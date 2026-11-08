@@ -1,0 +1,72 @@
+:root {
+  --bg: #e7ebee;
+  --ink: #1f2328;
+  --muted: #4b5563;
+  --card: rgba(255, 255, 255, 0.88);
+  --line: #d4d8dd;
+  --accent: #2563eb;
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: var(--ink);
+}
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+#app, #app canvas {
+  position: fixed;
+  inset: 0;
+  display: block;
+}
+
+.labels {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.room-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px 9px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  font-size: 13px;
+  line-height: 1.3;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.room-label strong { font-weight: 600; }
+.room-label span { color: var(--muted); font-size: 12px; }
+
+
+button {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+button:hover { border-color: #9ca3af; }
+button[aria-pressed='true'] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #fff;
+}
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+#btn-cut {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}

@@ -4,7 +4,6 @@ import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import { makeMaterials } from './materials.js';
 import { buildApartment, buildGround, buildWalls } from './build.js';
 import { buildFurniture } from './furniture.js';
-import { attachTouchNavigation } from './touch.js';
 import { WALL_HEIGHT, CUTAWAY_HEIGHT, VARIANTS, VARIANT_GAP, PLAN_BOUNDS, UNITS_PER_METER, THICKNESS } from './plan.js';
 
 // --- renderer, scene, camera ------------------------------------------------
@@ -50,6 +49,7 @@ const layouts = VARIANTS.map((layout, i) => {
   const group = new THREE.Group();
   group.position.x = offsets[i];
   const apt = buildApartment(mats, layout);
+  apt.labels.visible = false; // room labels start hidden; toggled by "Oznake prostorija"
   group.add(apt.root, apt.labels, buildFurniture(layout.furniture));
   scene.add(group);
   return { layout, group, labels: apt.labels, walls: null };
@@ -73,8 +73,9 @@ orbit.enableDamping = true;
 orbit.maxPolarAngle = Math.PI * 0.47;
 orbit.minDistance = 2;
 orbit.maxDistance = 60;
-orbit.screenSpacePanning = false; // right-drag slides across the floor, like a map
-attachTouchNavigation(renderer.domElement, camera, orbit); // touch gestures, see touch.js
+orbit.screenSpacePanning = false; // panning slides across the floor, like a map
+// Touch: one finger moves around, two fingers pinch to zoom and drag to rotate.
+orbit.touches = { ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_ROTATE };
 
 // --- UI -----------------------------------------------------------------------
 const btnCut = document.getElementById('btn-cut');
@@ -86,17 +87,11 @@ btnCut.addEventListener('click', () => {
 });
 
 const btnLabels = document.getElementById('btn-labels');
-let showLabels = true;
+let showLabels = false;
 btnLabels.addEventListener('click', () => {
   showLabels = !showLabels;
   btnLabels.setAttribute('aria-pressed', String(showLabels));
-  for (const l of layouts) {
-    l.labels.visible = showLabels;
-    // CSS2DRenderer leaves hidden labels' elements in the page; hide them directly.
-    l.labels.traverse((o) => {
-      if (o.element) o.element.style.display = showLabels ? '' : 'none';
-    });
-  }
+  for (const l of layouts) l.labels.visible = showLabels;
 });
 
 // --- loop -----------------------------------------------------------------------

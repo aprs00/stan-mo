@@ -10,8 +10,10 @@ npm run build    # static site in dist/
 
 ## Controls
 
-Drag with the left mouse button to rotate, the right button to pan, and the scroll wheel to zoom.
-**Presjek zidova** cuts the walls at 1.2 m so you can see into the rooms.
+- Mouse: drag with the left button to rotate, the right button to move around, and the scroll wheel to zoom.
+- Touch: drag with one finger to move around, and use two fingers to rotate and pinch to zoom.
+- **Presjek zidova** cuts the walls at 1.2 m so you can see into the rooms.
+- **Oznake prostorija** shows or hides the room names and areas.
 
 ## Layouts
 

@@ -51,7 +51,7 @@ const layouts = VARIANTS.map((layout, i) => {
   const apt = buildApartment(mats, layout);
   group.add(apt.root, apt.labels, buildFurniture(layout.furniture));
   scene.add(group);
-  return { layout, group, walls: null };
+  return { layout, group, labels: apt.labels, walls: null };
 });
 
 function setWallHeight(h) {
@@ -72,6 +72,9 @@ orbit.enableDamping = true;
 orbit.maxPolarAngle = Math.PI * 0.47;
 orbit.minDistance = 2;
 orbit.maxDistance = 60;
+orbit.screenSpacePanning = false; // panning slides across the floor, like a map
+// Touch: one finger moves around, two fingers rotate and pinch to zoom.
+orbit.touches = { ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_ROTATE };
 
 // --- UI -----------------------------------------------------------------------
 const btnCut = document.getElementById('btn-cut');
@@ -80,6 +83,20 @@ btnCut.addEventListener('click', () => {
   cutaway = !cutaway;
   btnCut.setAttribute('aria-pressed', String(cutaway));
   setWallHeight(cutaway ? CUTAWAY_HEIGHT : WALL_HEIGHT);
+});
+
+const btnLabels = document.getElementById('btn-labels');
+let showLabels = true;
+btnLabels.addEventListener('click', () => {
+  showLabels = !showLabels;
+  btnLabels.setAttribute('aria-pressed', String(showLabels));
+  for (const l of layouts) {
+    l.labels.visible = showLabels;
+    // CSS2DRenderer leaves hidden labels' elements in the page; hide them directly.
+    l.labels.traverse((o) => {
+      if (o.element) o.element.style.display = showLabels ? '' : 'none';
+    });
+  }
 });
 
 // --- loop -----------------------------------------------------------------------

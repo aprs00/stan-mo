@@ -63,27 +63,33 @@ const stairOutline = () => P.STAIRS.outline.map(toWorld);
 
 // ---------------------------------------------------------------------------
 
-export function buildGround(mats) {
+// One ground plane under all layouts; `offsets` are the layouts' X positions,
+// so the ground can be cut open over each stairwell.
+export function buildGround(mats, offsets = [0]) {
   const size = 80;
   const shape = pathPoints(new THREE.Shape(), [[-size, -size], [size, -size], [size, size], [-size, size]]);
-  if (stairsDown()) shape.holes.push(pathPoints(new THREE.Path(), outset(stairOutline(), 0.13)));
+  if (stairsDown()) {
+    const hole = outset(stairOutline(), 0.13);
+    for (const dx of offsets) shape.holes.push(pathPoints(new THREE.Path(), hole.map(([x, z]) => [x + dx, z])));
+  }
   const ground = flat(new THREE.Mesh(new THREE.ShapeGeometry(shape), mats.ground));
   ground.position.y = -P.SLAB - 0.006;
   ground.receiveShadow = true;
   return ground;
 }
 
-export function buildApartment(mats) {
+// Everything of one layout (a VARIANTS entry) except the walls.
+export function buildApartment(mats, layout) {
   const root = new THREE.Group();
 
   root.add(buildSlab(mats));
-  for (const room of P.ROOMS) root.add(buildFloor(room, mats));
+  for (const room of layout.rooms) root.add(buildFloor(room, mats));
   root.add(buildStairs(mats));
-  for (const door of P.DOORS) root.add(buildDoor(door, mats));
-  for (const seg of P.RAILINGS) root.add(buildRailing(seg, mats));
-  for (const fx of P.FIXTURES) root.add(buildFixture(fx, mats));
+  for (const door of layout.doors) root.add(buildDoor(door, mats));
+  for (const seg of layout.railings) root.add(buildRailing(seg, mats));
+  for (const fx of layout.fixtures) root.add(buildFixture(fx, mats));
 
-  return { root, labels: buildLabels() };
+  return { root, labels: buildLabels(layout) };
 }
 
 function buildSlab(mats) {
@@ -223,9 +229,9 @@ function makeLabel(name, area, at, y = 0.05) {
   return obj;
 }
 
-function buildLabels() {
+function buildLabels(layout) {
   const group = new THREE.Group();
-  for (const r of P.ROOMS) if (r.name) group.add(makeLabel(r.name, r.area, r.label));
+  for (const r of layout.rooms) if (r.name) group.add(makeLabel(r.name, r.area, r.label));
   group.add(makeLabel('Stubište', stairsDown() ? 'prema dolje' : 'prema gore', P.STAIRS.label));
   return group;
 }
@@ -233,9 +239,9 @@ function buildLabels() {
 // ---------------------------------------------------------------------------
 // Walls are rebuilt when the wall height changes (full / cutaway view).
 
-export function buildWalls(height, mats) {
+export function buildWalls(height, mats, layout) {
   const group = new THREE.Group();
-  for (const wall of P.WALLS) addWall(wall, height, mats, group);
+  for (const wall of layout.walls) addWall(wall, height, mats, group);
   return { group };
 }
 

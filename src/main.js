@@ -4,7 +4,7 @@ import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import { makeMaterials } from './materials.js';
 import { buildApartment, buildGround, buildWalls } from './build.js';
 import { buildFurniture } from './furniture.js';
-import { WALL_HEIGHT, CUTAWAY_HEIGHT, FURNITURE } from './plan.js';
+import { WALL_HEIGHT, CUTAWAY_HEIGHT, VARIANTS, VARIANT_GAP, PLAN_BOUNDS, UNITS_PER_METER, THICKNESS } from './plan.js';
 
 // --- renderer, scene, camera ------------------------------------------------
 const app = document.getElementById('app');
@@ -26,32 +26,43 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color('#E7EBEE');
 
 const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.05, 200);
-camera.position.set(7, 12, 11);
+camera.position.set(0, 17, 19);
 
 scene.add(new THREE.HemisphereLight('#ffffff', '#8d8a80', 1.6));
 const sun = new THREE.DirectionalLight('#fff3e2', 2.4);
 sun.position.set(6, 12, 4);
 sun.castShadow = true;
-sun.shadow.mapSize.set(2048, 2048);
-Object.assign(sun.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9, near: 1, far: 40 });
+sun.shadow.mapSize.set(4096, 4096);
+Object.assign(sun.shadow.camera, { left: -16, right: 16, top: 12, bottom: -12, near: 1, far: 50 });
 sun.shadow.bias = -0.0004;
 sun.shadow.normalBias = 0.02;
 scene.add(sun);
 
-// --- apartment ----------------------------------------------------------------
+// --- layouts, side by side ------------------------------------------------------
 const mats = makeMaterials();
-scene.add(buildGround(mats));
-const apt = buildApartment(mats);
-scene.add(apt.root, apt.labels, buildFurniture(FURNITURE));
+const planWidth = (PLAN_BOUNDS[2] - PLAN_BOUNDS[0]) / UNITS_PER_METER + THICKNESS.ext;
+const step = planWidth + VARIANT_GAP;
+const offsets = VARIANTS.map((_, i) => (i - (VARIANTS.length - 1) / 2) * step);
 
-let walls = null;
+scene.add(buildGround(mats, offsets));
+const layouts = VARIANTS.map((layout, i) => {
+  const group = new THREE.Group();
+  group.position.x = offsets[i];
+  const apt = buildApartment(mats, layout);
+  group.add(apt.root, apt.labels, buildFurniture(layout.furniture));
+  scene.add(group);
+  return { layout, group, walls: null };
+});
+
 function setWallHeight(h) {
-  if (walls) {
-    scene.remove(walls.group);
-    walls.group.traverse((o) => o.geometry?.dispose());
+  for (const l of layouts) {
+    if (l.walls) {
+      l.group.remove(l.walls);
+      l.walls.traverse((o) => o.geometry?.dispose());
+    }
+    l.walls = buildWalls(h, mats, l.layout).group;
+    l.group.add(l.walls);
   }
-  walls = buildWalls(h, mats);
-  scene.add(walls.group);
 }
 setWallHeight(WALL_HEIGHT);
 
@@ -60,7 +71,7 @@ const orbit = new OrbitControls(camera, renderer.domElement);
 orbit.enableDamping = true;
 orbit.maxPolarAngle = Math.PI * 0.47;
 orbit.minDistance = 2;
-orbit.maxDistance = 40;
+orbit.maxDistance = 60;
 
 // --- UI -----------------------------------------------------------------------
 const btnCut = document.getElementById('btn-cut');
